@@ -108,16 +108,26 @@ class TestBooksCollector:
         collector.set_book_genre('Книга', 'Несуществующий жанр')
         assert collector.get_book_genre('Книга') == ''
 
-    # Тест для получения жанра существующей книги
+    # Тест для получения жанра книги по имени
     @pytest.mark.parametrize("book_name, expected_genre", [
         ("Властелин колец", "Фантастика"),
         ("Дракула", "Ужасы"),
         ("Шерлок Холмс", "Детективы")
     ])
     def test_get_book_genre_existing_book(self, collector, book_name, expected_genre):
-        collector.add_new_book(book_name)
-        collector.set_book_genre(book_name, expected_genre)
+        test_books = {
+            "Властелин колец": "Фантастика",
+            "Дракула": "Ужасы",
+            "Шерлок Холмс": "Детективы",
+        }
+
+        for book, genre in test_books.items():
+            collector.add_new_book(book)
+            if genre:
+                collector.set_book_genre(book, genre)
+
         assert collector.get_book_genre(book_name) == expected_genre
+
 
     # Тест для книги без жанра
     def test_get_book_genre_book_without_genre(self, collector):
@@ -132,13 +142,31 @@ class TestBooksCollector:
     def test_single_book_with_genre(self, collector):
         collector.add_new_book("Властелин колец")
         collector.set_book_genre("Властелин колец", "Фантастика")
+        assert collector.get_books_genre() == {"Властелин колец": "Фантастика"}
 
     # Тест поиска книги по жанру
     def test_get_books_with_specific_genre(self, collector):
-        collector.add_new_book("Дракула")
-        collector.set_book_genre("Дракула", "Ужасы")
+        test_books = {
+            "Дракула": "Ужасы",
+            "Хребты безумия": "Ужасы",
+            "Властелин колец": "Фантастика",
+            "Книга без жанра": ""
+        }
 
-        assert collector.get_books_with_specific_genre("Ужасы") == ["Дракула"]
+        for book, genre in test_books.items():
+            collector.add_new_book(book)
+            if genre:
+                collector.set_book_genre(book, genre)
+
+        horror_books = collector.get_books_with_specific_genre("Ужасы")
+        assert sorted(horror_books) == sorted(["Дракула", "Хребты безумия"]), (
+            "Должны вернуться все книги жанра 'Ужасы'"
+        )
+
+        scifi_books = collector.get_books_with_specific_genre("Фантастика")
+        assert scifi_books == ["Властелин колец"], (
+            "Должна вернуться одна книга жанра 'Фантастика'"
+        )
 
     # Тест на добавление книги в Избранное
     def test_add_book_in_favorites(self, collector):
